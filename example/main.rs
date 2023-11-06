@@ -1,23 +1,18 @@
 use miniquad::*;
 use yakui_miniquad::*;
-use yakui::{Yakui, Rect, TextureId, event::Event, paint::{PaintDom, self}, Color, widgets::Pad};
+use yakui::{Color, widgets::Pad};
 
 struct Stage {
     yakui_mq: YakuiMiniQuad
 }
 
 impl Stage {
-
     pub fn new(ctx: &mut GraphicsContext) -> Stage {
-
         let yakui_mq = YakuiMiniQuad::new(ctx);
-
         Stage {
             yakui_mq
         }
-
     }
-
 }
 
 impl EventHandler for Stage {

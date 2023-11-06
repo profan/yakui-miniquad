@@ -1,7 +1,7 @@
 use std::{ops::Range, collections::HashMap};
 
 use yakui::paint;
-use yakui::{Yakui, Rect, TextureId, event::Event, paint::PaintDom};
+use yakui::{Yakui, Rect, event::Event, paint::PaintDom};
 use yakui::input::MouseButton as YakuiMouseButton;
 use yakui::input::KeyCode as YakuiKeyCode;
 
@@ -20,14 +20,12 @@ pub struct YakuiMiniQuad {
 }
 
 impl YakuiMiniQuad {
-
     pub fn new(ctx: &mut GraphicsContext) -> YakuiMiniQuad {
         YakuiMiniQuad {
             ui: Yakui::new(),
             state: YakuiMiniquadState::new(ctx)
         }
     }
-
 }
 
 pub struct YakuiMiniquadState {
@@ -134,7 +132,7 @@ impl EventHandler for YakuiMiniQuad {
     }
 
     fn draw(&mut self, ctx: &mut Context) {
-        self.state.paint(&mut self.ui, ctx)
+        self.state.paint(&mut self.ui, ctx);
     }
 
 }
@@ -165,12 +163,12 @@ impl YakuiMiniquadState {
         
         let textures = HashMap::new();
 
-        let vertex_buffer = Buffer::stream(ctx, BufferType::VertexBuffer, 1);
+        let vertex_buffers = vec![Buffer::stream(ctx, BufferType::VertexBuffer, 1)];
         let index_buffer = Buffer::stream(ctx, BufferType::IndexBuffer, 1);
 
         let layout = Bindings {
-            vertex_buffers: vec![vertex_buffer],
-            index_buffer: index_buffer,
+            vertex_buffers,
+            index_buffer,
             images: Vec::new()
         };
 
@@ -186,14 +184,6 @@ impl YakuiMiniquadState {
             indices: Buffer::stream(ctx, BufferType::IndexBuffer, 1),
             commands: Vec::new()
         }
-
-    }
-
-    pub fn add_texture(&mut self, texture: Texture, min_filter: FilterMode, mag_filter: FilterMode) {
-
-    }
-
-    pub fn update_texture(&mut self, id: TextureId, texture: Texture) {
 
     }
 
@@ -533,7 +523,7 @@ fn make_premultiplied_alpha_blend_state() -> BlendState {
 
 fn make_main_pipeline(ctx: &mut GraphicsContext, buffers: &[BufferLayout], attributes: &[VertexAttribute]) -> Pipeline {
 
-    let main_shader = Shader::new(ctx, yakui_shader_main::VERTEX, yakui_shader_main::FRAGMENT, yakui_shader_main::meta()).expect("yakui-miniquad: could not compile main shader!");
+    let main_shader = Shader::new(ctx, yakui_shader_main::VERTEX, yakui_shader_main::FRAGMENT, yakui_shader_main::meta()).expect("[yakui-miniquad]: could not compile main shader!");
 
     let pipeline_params = PipelineParams {
         cull_face: CullFace::Nothing,
@@ -560,7 +550,7 @@ fn make_main_pipeline(ctx: &mut GraphicsContext, buffers: &[BufferLayout], attri
 
 fn make_text_pipeline(ctx: &mut GraphicsContext, buffers: &[BufferLayout], attributes: &[VertexAttribute]) -> Pipeline {
 
-    let text_shader = Shader::new(ctx, yakui_shader_text::VERTEX, yakui_shader_text::FRAGMENT, yakui_shader_text::meta()).expect("yakui-miniquad: could not compile text shader!");
+    let text_shader = Shader::new(ctx, yakui_shader_text::VERTEX, yakui_shader_text::FRAGMENT, yakui_shader_text::meta()).expect("[yakui-miniquad]: could not compile text shader!");
 
     let pipeline_params = PipelineParams {
         cull_face: CullFace::Nothing,
