@@ -75,17 +75,17 @@ impl EventHandler for Stage {
 
     fn update(&mut self, ctx: &mut Context) {
 
-        self.yakui_mq.run(ctx, |_| {
+        self.yakui_mq.start(ctx);
 
-            yakui::center(|| {
-                yakui::colored_box_container(Color::CORNFLOWER_BLUE, || {
-                    yakui::pad(Pad::all(16.0), || {
-                        yakui::text(32.0, "hello, world!");    
-                    });
+        yakui::center(|| {
+            yakui::colored_box_container(Color::CORNFLOWER_BLUE, || {
+                yakui::pad(Pad::all(16.0), || {
+                    yakui::text(32.0, "hello, world!");
                 });
             });
-
         });
+
+        self.yakui_mq.finish();
 
     }
 

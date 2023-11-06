@@ -28,11 +28,25 @@ impl YakuiMiniQuad {
         }
     }
 
-    pub fn run<F>(&mut self, ctx: &mut Context, mut ui_update_function: F)
-        where F: FnMut(&mut Yakui) -> ()
+    pub fn ctx(&mut self) -> &mut Yakui {
+        &mut self.ui
+    }
+
+    pub fn start(&mut self, ctx: &mut Context)
     {
         self.update(ctx);
-        
+        self.ui.start();
+    }
+
+    pub fn finish(&mut self) {
+        self.ui.finish();
+    }
+
+    pub fn run<F>(&mut self, ctx: &mut Context, ui_update_function: F)
+        where F: FnOnce(&mut Yakui) -> ()
+    {
+        self.update(ctx);
+
         self.ui.start();
         ui_update_function(&mut self.ui);
         self.ui.finish();
@@ -93,7 +107,7 @@ impl EventHandler for YakuiMiniQuad {
         ) {
         if let Some(mouse_button) = miniquad_mouse_button_to_yakui(button) {
             self.ui.handle_event(Event::MouseButtonChanged { button: mouse_button, down: false });
-        }    
+        }
     }
 
     fn key_down_event(
@@ -111,7 +125,7 @@ impl EventHandler for YakuiMiniQuad {
     fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymods: KeyMods) {
         if let Some(key_code) = miniquad_key_to_yakui(keycode) {
             self.ui.handle_event(Event::KeyChanged { key: key_code, down: false });
-        }        
+        }
     }
 
     fn mouse_wheel_event(&mut self, _ctx: &mut Context, x: f32, y: f32) {
@@ -135,7 +149,7 @@ impl EventHandler for YakuiMiniQuad {
     }
 
     fn update(&mut self, ctx: &mut Context) {
-        
+
         let (screen_w, screen_h) = ctx.screen_size();
 
         self.ui.set_scale_factor(ctx.dpi_scale());
@@ -144,7 +158,7 @@ impl EventHandler for YakuiMiniQuad {
             Default::default(),
             [screen_w, screen_h].into(),
         ));
-        
+
     }
 
     fn draw(&mut self, ctx: &mut Context) {
@@ -176,7 +190,7 @@ impl YakuiMiniquadState {
                 VertexAttribute::new("in_color", VertexFormat::Float4),
             ]
         );
-        
+
         let textures = HashMap::new();
 
         let vertex_buffers = vec![Buffer::stream(ctx, BufferType::VertexBuffer, 1)];
@@ -660,7 +674,7 @@ mod yakui_shader_text {
     void main() {
         lowp float coverage = texture2D(coverage_texture, out_texcoord).r;
         lowp float alpha = coverage * out_color.a;
-        
+
         gl_FragColor = vec4(out_color.rgb * alpha, alpha);
     }"#;
 
