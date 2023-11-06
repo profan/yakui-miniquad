@@ -15,17 +15,33 @@ struct YakuiVertex {
 }
 
 pub struct YakuiMiniQuad {
-    pub ui: Yakui,
-    pub state: YakuiMiniquadState
+    ui: Yakui,
+    state: YakuiMiniquadState
 }
 
 impl YakuiMiniQuad {
+
     pub fn new(ctx: &mut GraphicsContext) -> YakuiMiniQuad {
         YakuiMiniQuad {
             ui: Yakui::new(),
             state: YakuiMiniquadState::new(ctx)
         }
     }
+
+    pub fn run<F>(&mut self, ctx: &mut Context, mut ui_update_function: F)
+        where F: FnMut(&mut Yakui) -> ()
+    {
+        self.update(ctx);
+        
+        self.ui.start();
+        ui_update_function(&mut self.ui);
+        self.ui.finish();
+    }
+
+    pub fn draw(&mut self, ctx: &mut GraphicsContext) {
+        self.state.paint(&mut self.ui, ctx);
+    }
+
 }
 
 pub struct YakuiMiniquadState {
