@@ -1,5 +1,7 @@
 yakui-miniquad
 -----------------------
+[![CI](https://github.com/profan/yakui-miniquad/actions/workflows/rust.yml/badge.svg)](https://github.com/profan/yakui-miniquad/actions/workflows/rust.yml)
+
 This is a simple library integrating yakui with miniquad, allowing you to use yakui with your miniquad projects easily.
 
 Feel free to use this as you wish, I will maintain a simple feature matrix here with what version of this crate corresponds to which version of miniquad and yakui, so you can pick the one you should be using.
