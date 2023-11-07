@@ -9,7 +9,7 @@ One version which is always on the latest stable miniquad and yakui crate will b
 I'm happy to accept contributions in the form of fixes or improvements, just be nice :)
 
 # Example
-See [the example](example/main.rs), you can also `cargo run --examples hello-world`.
+See [the example](examples/hello-world/main.rs), you can also `cargo run --example hello-world` to test the example.
 
 # License
 See LICENSE
