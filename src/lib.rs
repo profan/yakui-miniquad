@@ -7,6 +7,9 @@ use yakui::input::KeyCode as YakuiKeyCode;
 
 use miniquad::*;
 
+pub use miniquad;
+pub use yakui;
+
 #[repr(C)]
 struct YakuiVertex {
     pos: yakui::Vec2,
