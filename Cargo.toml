@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 miniquad = { version = "0.3.13", default-features = false }
-yakui = { version = "0.2.0", default_features = false }
+yakui = "0.2.0"
