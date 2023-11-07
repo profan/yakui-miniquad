@@ -5,6 +5,7 @@ yakui-miniquad
 [![Crates.io version](https://img.shields.io/crates/v/yakui-miniquad.svg)](https://crates.io/crates/yakui-miniquad)
 
 This is a simple library integrating yakui with miniquad, allowing you to use yakui with your miniquad projects easily.
+
 I'm happy to accept contributions in the form of fixes or improvements, just be nice :)
 
 # Version
