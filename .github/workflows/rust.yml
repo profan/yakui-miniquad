@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "main", "macroquad-0.3" ]
+    branches: [ "main", "miniquad-0.3" ]
   pull_request:
-    branches: [ "main", "macroquad-0.3" ]
+    branches: [ "main", "miniquad-0.3" ]
 
 env:
   CARGO_TERM_COLOR: always
