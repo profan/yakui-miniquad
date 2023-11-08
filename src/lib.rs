@@ -200,6 +200,14 @@ pub struct YakuiMiniquadState {
     commands: Vec<DrawCommand>,
 }
 
+impl Drop for YakuiMiniquadState {
+    fn drop(&mut self) {
+        for (_, texture) in &self.textures {
+            texture.delete();
+        }
+    }
+}
+
 struct DrawCommand {
     index_range: Range<u32>,
     texture: Texture,
