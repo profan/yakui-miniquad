@@ -2,7 +2,7 @@
 //! `yakui-miniquad` integrates yakui with miniquad.
 //!
 //! # Usage
-//! In order to use this library, create an instance of [`YakuiMiniQuad`] and call its event-handler functions from your `miniquad::EventHandler` implementation.
+//! In order to use this library, create an instance of [`YakuiMiniQuad`] and call its event-handler functions from your [`miniquad::EventHandler`] implementation.
 //!
 //! Here's an example which just renders "hello, world" in the middle of the screen.
 //!
@@ -155,6 +155,7 @@ impl YakuiMiniQuad {
         }
     }
 
+    /// Returns a reference to the internal Yakui context.
     pub fn ctx(&mut self) -> &mut Yakui {
         &mut self.ui
     }
@@ -170,7 +171,7 @@ impl YakuiMiniQuad {
         self.ui.finish();
     }
 
-    /// Wraps calling [`start`] and [`finish`], where [`start`] will now be called before your closure is invoked and [`finish`] will be invoked after.
+    /// Wraps calling start and finish, where start will now be called before your closure is invoked and finish will be invoked after.
     pub fn run<F>(&mut self, ctx: &mut Context, ui_update_function: F)
     where
         F: FnOnce(&mut Yakui) -> (),
