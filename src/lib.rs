@@ -125,21 +125,22 @@
 
 use std::{collections::HashMap, ops::Range};
 
-use yakui::input::KeyCode as YakuiKeyCode;
-use yakui::input::MouseButton as YakuiMouseButton;
-use yakui::paint;
-use yakui::{event::Event, paint::PaintDom, Rect, Yakui};
+use yakui_core::geometry::Rect;
+use yakui_core::input::KeyCode as YakuiKeyCode;
+use yakui_core::input::MouseButton as YakuiMouseButton;
+use yakui_core::paint;
+use yakui_core::{event::Event, paint::PaintDom, Yakui};
 
 use miniquad::*;
 
 pub use miniquad;
-pub use yakui;
+pub use yakui_core;
 
 #[repr(C)]
 struct YakuiVertex {
-    pos: yakui::Vec2,
-    texcoord: yakui::Vec2,
-    color: yakui::Vec4,
+    pos: yakui_core::geometry::Vec2,
+    texcoord: yakui_core::geometry::Vec2,
+    color: yakui_core::geometry::Vec4,
 }
 
 pub struct YakuiMiniQuad {
@@ -192,7 +193,7 @@ impl YakuiMiniQuad {
 pub struct YakuiMiniquadState {
     main_pipeline: Pipeline,
     text_pipeline: Pipeline,
-    textures: HashMap<yakui::ManagedTextureId, Texture>,
+    textures: HashMap<yakui_core::ManagedTextureId, Texture>,
     layout: Bindings,
 
     default_texture: Texture,
@@ -212,13 +213,13 @@ impl Drop for YakuiMiniquadState {
 struct DrawCommand {
     index_range: Range<u32>,
     texture: Texture,
-    pipeline: yakui::paint::Pipeline,
+    pipeline: yakui_core::paint::Pipeline,
     clip: Option<Rect>,
 }
 
 impl EventHandler for YakuiMiniQuad {
     fn mouse_motion_event(&mut self, _ctx: &mut Context, x: f32, y: f32) {
-        let mouse_position = yakui::Vec2::new(x, y);
+        let mouse_position = yakui_core::geometry::Vec2::new(x, y);
         self.ui
             .handle_event(Event::CursorMoved(Some(mouse_position)));
     }
@@ -273,7 +274,7 @@ impl EventHandler for YakuiMiniQuad {
 
     fn mouse_wheel_event(&mut self, _ctx: &mut Context, x: f32, y: f32) {
         self.ui.handle_event(Event::MouseScroll {
-            delta: yakui::Vec2 { x, y },
+            delta: yakui_core::geometry::Vec2 { x, y },
         });
     }
 
@@ -288,8 +289,8 @@ impl EventHandler for YakuiMiniQuad {
     }
 
     fn resize_event(&mut self, _ctx: &mut Context, width: f32, height: f32) {
-        let viewport_position = yakui::Vec2 { x: 0.0, y: 0.0 };
-        let viewport_size = yakui::Vec2 {
+        let viewport_position = yakui_core::geometry::Vec2 { x: 0.0, y: 0.0 };
+        let viewport_size = yakui_core::geometry::Vec2 {
             x: width,
             y: height,
         };
@@ -304,14 +305,15 @@ impl EventHandler for YakuiMiniQuad {
         let (screen_w, screen_h) = ctx.screen_size();
 
         self.ui.set_scale_factor(ctx.dpi_scale());
-        self.ui.set_surface_size(yakui::Vec2 {
+        self.ui.set_surface_size(yakui_core::geometry::Vec2 {
             x: screen_w,
             y: screen_h,
         });
-        self.ui.set_unscaled_viewport(yakui::Rect::from_pos_size(
-            Default::default(),
-            [screen_w, screen_h].into(),
-        ));
+        self.ui
+            .set_unscaled_viewport(yakui_core::geometry::Rect::from_pos_size(
+                Default::default(),
+                [screen_w, screen_h].into(),
+            ));
     }
 
     fn draw(&mut self, ctx: &mut Context) {
@@ -377,7 +379,7 @@ impl YakuiMiniquadState {
         }
     }
 
-    pub fn paint(&mut self, state: &mut yakui::Yakui, ctx: &mut GraphicsContext) {
+    pub fn paint(&mut self, state: &mut yakui_core::Yakui, ctx: &mut GraphicsContext) {
         let paint = state.paint();
 
         self.update_textures(ctx, paint);
@@ -393,8 +395,8 @@ impl YakuiMiniquadState {
 
             for command in &self.commands {
                 match command.pipeline {
-                    yakui::paint::Pipeline::Main => ctx.apply_pipeline(&self.main_pipeline),
-                    yakui::paint::Pipeline::Text => ctx.apply_pipeline(&self.text_pipeline),
+                    yakui_core::paint::Pipeline::Main => ctx.apply_pipeline(&self.main_pipeline),
+                    yakui_core::paint::Pipeline::Text => ctx.apply_pipeline(&self.text_pipeline),
                     _ => continue,
                 }
 
@@ -409,7 +411,7 @@ impl YakuiMiniquadState {
                             let size = rect.size().as_uvec2();
 
                             let max = (pos + size).min(surface);
-                            let size = yakui::UVec2::new(
+                            let size = yakui_core::geometry::UVec2::new(
                                 max.x.saturating_sub(pos.x),
                                 max.y.saturating_sub(pos.y),
                             );
@@ -491,7 +493,7 @@ impl YakuiMiniquadState {
 
         // upload the buffers at last
         let size_of_vertex_data_in_bytes =
-            draw_vertices.len() * std::mem::size_of::<yakui::paint::Vertex>();
+            draw_vertices.len() * std::mem::size_of::<yakui_core::paint::Vertex>();
         if self.vertices.size() < size_of_vertex_data_in_bytes {
             self.vertices.delete();
             self.vertices =
@@ -524,16 +526,16 @@ impl YakuiMiniquadState {
 
         for (id, change) in paint.texture_edits() {
             match change {
-                yakui::paint::TextureChange::Added => {
+                yakui_core::paint::TextureChange::Added => {
                     let texture = paint.texture(id).unwrap();
                     self.textures.insert(id, make_texture(ctx, texture));
                 }
-                yakui::paint::TextureChange::Removed => {
+                yakui_core::paint::TextureChange::Removed => {
                     if let Some(t) = self.textures.remove(&id) {
                         t.delete();
                     }
                 }
-                yakui::paint::TextureChange::Modified => {
+                yakui_core::paint::TextureChange::Modified => {
                     if let Some(existing) = self.textures.get_mut(&id) {
                         let texture = paint.texture(id).unwrap();
                         existing.update(ctx, texture.data());
@@ -544,7 +546,7 @@ impl YakuiMiniquadState {
     }
 }
 
-fn miniquad_mouse_button_to_yakui(button: MouseButton) -> Option<yakui::input::MouseButton> {
+fn miniquad_mouse_button_to_yakui(button: MouseButton) -> Option<yakui_core::input::MouseButton> {
     match button {
         MouseButton::Left => Some(YakuiMouseButton::One),
         MouseButton::Middle => Some(YakuiMouseButton::Two),
