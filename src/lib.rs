@@ -810,7 +810,12 @@ mod yakui_shader_main {
 
     void main() {
         lowp vec4 color = texture2D(color_texture, out_texcoord);
-        gl_FragColor = out_color * color;
+
+        lowp vec4 modulated = out_color * color;
+        lowp float gamma = 2.2; // apply gamma correction
+        lowp vec3 gamma_corrected = pow(modulated.rgb, vec3(1.0 / gamma));
+        
+        gl_FragColor = vec4(gamma_corrected, modulated.a);
     }"#;
 
     pub fn meta() -> ShaderMeta {
@@ -850,7 +855,9 @@ mod yakui_shader_text {
         lowp float coverage = texture2D(coverage_texture, out_texcoord).r;
         lowp float alpha = coverage * out_color.a;
 
-        gl_FragColor = vec4(out_color.rgb * alpha, alpha);
+        lowp float gamma = 2.2; // apply gamma correction
+        lowp vec3 gamma_corrected = pow(out_color.rgb, vec3(1.0 / gamma));
+        gl_FragColor = vec4(gamma_corrected * alpha, alpha);
     }"#;
 
     pub fn meta() -> ShaderMeta {
