@@ -695,10 +695,9 @@ fn resolve_texture_format(format: paint::TextureFormat) -> TextureFormat {
 fn make_texture(ctx: &mut GraphicsContext, texture: &paint::Texture) -> Texture {
     let texture_format = resolve_texture_format(texture.format());
     let dimensions = texture.size();
-    Texture::new(
+    Texture::from_data_and_format(
         ctx,
-        TextureAccess::Static,
-        Some(texture.data()),
+        texture.data(),
         TextureParams {
             format: texture_format,
             wrap: TextureWrap::Clamp,
