@@ -851,7 +851,7 @@ mod yakui_shader_text {
     uniform sampler2D coverage_texture;
 
     void main() {
-        lowp float coverage = texture2D(coverage_texture, out_texcoord).r;
+        lowp float coverage = texture2D(coverage_texture, out_texcoord).a;
         lowp float alpha = coverage * out_color.a;
 
         lowp float gamma = 2.2; // apply gamma correction

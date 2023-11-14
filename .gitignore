@@ -1,2 +1,4 @@
 target/
 *.*.s??
+dist/
+www/
