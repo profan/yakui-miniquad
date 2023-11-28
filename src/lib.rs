@@ -146,6 +146,8 @@ struct YakuiVertex {
 pub struct YakuiMiniQuad {
     ui: Yakui,
     state: YakuiMiniquadState,
+    has_keyboard_focus: bool,
+    has_mouse_focus: bool,
 }
 
 impl YakuiMiniQuad {
@@ -153,7 +155,19 @@ impl YakuiMiniQuad {
         YakuiMiniQuad {
             ui: Yakui::new(),
             state: YakuiMiniquadState::new(ctx),
+            has_keyboard_focus: false,
+            has_mouse_focus: false,
         }
+    }
+
+    /// Returns true if the last keyboard event was sunk by yakui, and should not be handled by your game.
+    pub fn has_keyboard_focus(&self) -> bool {
+        self.has_keyboard_focus
+    }
+
+    /// Returns true if the last mouse event was sunk by yakui, and should not be handled by your game.
+    pub fn has_mouse_focus(&self) -> bool {
+        self.has_mouse_focus
     }
 
     /// Returns a reference to the internal Yakui context.
@@ -232,7 +246,7 @@ impl EventHandler for YakuiMiniQuad {
         _y: f32,
     ) {
         if let Some(mouse_button) = miniquad_mouse_button_to_yakui(button) {
-            self.ui.handle_event(Event::MouseButtonChanged {
+            self.has_mouse_focus = self.ui.handle_event(Event::MouseButtonChanged {
                 button: mouse_button,
                 down: true,
             });
@@ -241,7 +255,7 @@ impl EventHandler for YakuiMiniQuad {
 
     fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: MouseButton, _x: f32, _y: f32) {
         if let Some(mouse_button) = miniquad_mouse_button_to_yakui(button) {
-            self.ui.handle_event(Event::MouseButtonChanged {
+            self.has_mouse_focus = self.ui.handle_event(Event::MouseButtonChanged {
                 button: mouse_button,
                 down: false,
             });
@@ -256,7 +270,7 @@ impl EventHandler for YakuiMiniQuad {
         _repeat: bool,
     ) {
         if let Some(key_code) = miniquad_key_to_yakui(keycode) {
-            self.ui.handle_event(Event::KeyChanged {
+            self.has_keyboard_focus = self.ui.handle_event(Event::KeyChanged {
                 key: key_code,
                 down: true,
             });
@@ -265,7 +279,7 @@ impl EventHandler for YakuiMiniQuad {
 
     fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymods: KeyMods) {
         if let Some(key_code) = miniquad_key_to_yakui(keycode) {
-            self.ui.handle_event(Event::KeyChanged {
+            self.has_keyboard_focus = self.ui.handle_event(Event::KeyChanged {
                 key: key_code,
                 down: false,
             });
@@ -273,7 +287,7 @@ impl EventHandler for YakuiMiniQuad {
     }
 
     fn mouse_wheel_event(&mut self, _ctx: &mut Context, x: f32, y: f32) {
-        self.ui.handle_event(Event::MouseScroll {
+        self.has_mouse_focus = self.ui.handle_event(Event::MouseScroll {
             delta: yakui_core::geometry::Vec2 { x, y },
         });
     }
@@ -285,7 +299,7 @@ impl EventHandler for YakuiMiniQuad {
         _keymods: KeyMods,
         _repeat: bool,
     ) {
-        self.ui.handle_event(Event::TextInput(character));
+        self.has_keyboard_focus = self.ui.handle_event(Event::TextInput(character));
     }
 
     fn resize_event(&mut self, _ctx: &mut Context, width: f32, height: f32) {

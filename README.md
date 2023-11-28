@@ -1,7 +1,7 @@
 yakui-miniquad
 -----------------------
 [![CI](https://github.com/profan/yakui-miniquad/actions/workflows/rust.yml/badge.svg)](https://github.com/profan/yakui-miniquad/actions/workflows/rust.yml)
-[![Docs](https://docs.rs/yakui-miniquad/badge.svg?version=0.2.2)](https://docs.rs/yakui-miniquad/0.2.2/yakui_miniquad/)
+[![Docs](https://docs.rs/yakui-miniquad/badge.svg?version=0.2.3)](https://docs.rs/yakui-miniquad/0.2.3/yakui_miniquad/)
 [![Crates.io version](https://img.shields.io/crates/v/yakui-miniquad.svg)](https://crates.io/crates/yakui-miniquad)
 
 This is a simple library integrating yakui with miniquad, allowing you to use yakui with your miniquad projects easily.
