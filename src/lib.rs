@@ -160,6 +160,11 @@ impl YakuiMiniQuad {
         }
     }
 
+    /// Returns true if the last mouse or keyboard event was sunk by yakui, and should not be handled by your game.
+    pub fn has_input_focus(&self) -> bool {
+        self.has_mouse_focus || self.has_keyboard_focus
+    }
+
     /// Returns true if the last keyboard event was sunk by yakui, and should not be handled by your game.
     pub fn has_keyboard_focus(&self) -> bool {
         self.has_keyboard_focus
