@@ -7,84 +7,66 @@
 //! Here's an example which just renders "hello, world" in the middle of the screen.
 //!
 //! ```no_run
+//! use std::ops::DerefMut;
+//!
 //! use miniquad::*;
+//! use miniquad::window::new_rendering_backend;
+//! use yakui::{widgets::Pad, Color};
+//!
 //! use yakui_miniquad::*;
-//! use yakui::{Color, widgets::Pad};
+//! use yakui_miniquad::event_handlers::YakuiMiniQuadOwnedHandler;
 //!
 //! struct Stage {
-//!     yakui_mq: YakuiMiniQuad
+//!     yakui_mq: YakuiMiniQuadOwnedHandler,
 //! }
 //!
 //! impl Stage {
-//!    pub fn new(ctx: &mut GraphicsContext) -> Stage {
-//!         let yakui_mq = YakuiMiniQuad::new(ctx);
-//!         Stage {
-//!             yakui_mq
-//!         }
+//!     pub fn new(mut ctx: Box<Context>) -> Stage {
+//!         let yakui_mq = YakuiMiniQuad::new(ctx.deref_mut()).into_owned_event_handler(ctx);
+//!         Stage { yakui_mq }
 //!     }
 //! }
 //!
 //! impl EventHandler for Stage {
-//!
-//!     fn mouse_motion_event(&mut self, ctx: &mut Context, x: f32, y: f32) {
-//!         self.yakui_mq.mouse_motion_event(ctx, x, y);
+//!     fn mouse_motion_event(&mut self, x: f32, y: f32) {
+//!         self.yakui_mq.mouse_motion_event(x, y);
 //!     }
 //!
-//!     fn mouse_button_down_event(
-//!             &mut self,
-//!             ctx: &mut Context,
-//!             button: MouseButton,
-//!             x: f32,
-//!             y: f32,
-//!         ) {
-//!         self.yakui_mq.mouse_button_down_event(ctx, button, x, y);
+//!     fn mouse_button_down_event(&mut self, button: MouseButton, x: f32, y: f32) {
+//!         self.yakui_mq.mouse_button_down_event(button, x, y);
 //!     }
 //!
-//!     fn mouse_button_up_event(
-//!             &mut self,
-//!             ctx: &mut Context,
-//!             button: MouseButton,
-//!             x: f32,
-//!             y: f32,
-//!         ) {
-//!         self.yakui_mq.mouse_button_up_event(ctx, button, x, y);
+//!     fn mouse_button_up_event(&mut self, button: MouseButton, x: f32, y: f32) {
+//!         self.yakui_mq.mouse_button_up_event(button, x, y);
 //!     }
 //!
 //!     fn key_down_event(
-//!             &mut self,
-//!             ctx: &mut Context,
-//!             keycode: KeyCode,
-//!             keymods: KeyMods,
-//!             repeat: bool,
-//!         ) {
-//!         self.yakui_mq.key_down_event(ctx, keycode, keymods, repeat);
+//!         &mut self,
+//!         keycode: KeyCode,
+//!         keymods: KeyMods,
+//!         repeat: bool,
+//!     ) {
+//!         self.yakui_mq.key_down_event(keycode, keymods, repeat);
 //!     }
 //!
-//!     fn key_up_event(&mut self, ctx: &mut Context, keycode: KeyCode, keymods: KeyMods) {
-//!         self.yakui_mq.key_up_event(ctx, keycode, keymods);
+//!     fn key_up_event(&mut self, keycode: KeyCode, keymods: KeyMods) {
+//!         self.yakui_mq.key_up_event(keycode, keymods);
 //!     }
 //!
-//!     fn mouse_wheel_event(&mut self, ctx: &mut Context, x: f32, y: f32) {
-//!         self.yakui_mq.mouse_wheel_event(ctx, x, y);
+//!     fn mouse_wheel_event(&mut self, x: f32, y: f32) {
+//!         self.yakui_mq.mouse_wheel_event(x, y);
 //!     }
 //!
-//!     fn char_event(
-//!             &mut self,
-//!             ctx: &mut Context,
-//!             character: char,
-//!             keymods: KeyMods,
-//!             repeat: bool,
-//!         ) {
-//!         self.yakui_mq.char_event(ctx, character, keymods, repeat);
+//!     fn char_event(&mut self, character: char, keymods: KeyMods, repeat: bool) {
+//!         self.yakui_mq.char_event(character, keymods, repeat);
 //!     }
 //!
-//!     fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {
-//!         self.yakui_mq.resize_event(ctx, width, height);
+//!     fn resize_event(&mut self, width: f32, height: f32) {
+//!         self.yakui_mq.resize_event(width, height);
 //!     }
 //!
-//!     fn update(&mut self, ctx: &mut Context) {
-//!
-//!         self.yakui_mq.start(ctx);
+//!     fn update(&mut self) {
+//!         self.yakui_mq.start();
 //!
 //!         yakui::center(|| {
 //!             yakui::colored_box_container(Color::CORNFLOWER_BLUE, || {
@@ -95,46 +77,48 @@
 //!         });
 //!
 //!         self.yakui_mq.finish();
-//!
 //!     }
 //!
-//!     fn draw(&mut self, ctx: &mut Context) {
-//!
-//!         ctx.begin_default_pass(Default::default());
+//!     fn draw(&mut self) {
+//!         self.yakui_mq.miniquad_ctx().begin_default_pass(Default::default());
 //!
 //!         // draw some stuff before the UI?
 //!
-//!         self.yakui_mq.draw(ctx);
+//!         self.yakui_mq.draw();
 //!
 //!         // ... draw some stuff after the UI!
+//!
+//!         let ctx = self.yakui_mq.miniquad_ctx();
 //!
 //!         ctx.end_render_pass();
 //!
 //!         ctx.commit_frame();
-//!
 //!     }
-//!
 //! }
 //!
 //! fn main() {
-//!     miniquad::start(conf::Conf::default(), |mut ctx| {
-//!         Box::new(Stage::new(&mut ctx))
+//!     miniquad::start(conf::Conf::default(), || {
+//!         Box::new(Stage::new(new_rendering_backend()))
 //!     });
 //! }
 //!```
 
 use std::{collections::HashMap, ops::Range};
+use std::mem::size_of;
+use std::ops::DerefMut;
 
+use miniquad::{TextureId, BufferId, BufferSource, BufferLayout, BufferUsage, Pipeline, Bindings, EventHandler, MouseButton, KeyCode, KeyMods, Context, VertexAttribute, VertexFormat, RenderingBackend, TextureAccess, TextureSource, TextureParams, TextureKind, TextureFormat, TextureWrap, FilterMode, MipmapFilterMode, BufferType, BlendState, Equation, BlendFactor, BlendValue, ShaderSource, PipelineParams, CullFace, FrontFaceOrder, Comparison, PrimitiveType};
+use miniquad::window::{dpi_scale, screen_size};
+use yakui_core::{event::Event, paint::PaintDom, Yakui};
 use yakui_core::geometry::Rect;
 use yakui_core::input::KeyCode as YakuiKeyCode;
 use yakui_core::input::MouseButton as YakuiMouseButton;
-use yakui_core::paint;
-use yakui_core::{event::Event, paint::PaintDom, Yakui};
-
-use miniquad::*;
 
 pub use miniquad;
 pub use yakui_core;
+use crate::event_handlers::{YakuiMiniQuadOwnedHandler, YakuiMiniQuadRefHandler};
+
+pub mod event_handlers;
 
 #[repr(C)]
 struct YakuiVertex {
@@ -151,13 +135,29 @@ pub struct YakuiMiniQuad {
 }
 
 impl YakuiMiniQuad {
-    pub fn new(ctx: &mut GraphicsContext) -> YakuiMiniQuad {
+    pub fn new(ctx: &mut Context) -> YakuiMiniQuad {
         YakuiMiniQuad {
-            ui: Yakui::new(),
             state: YakuiMiniquadState::new(ctx),
+            ui: Yakui::new(),
             has_keyboard_focus: false,
             has_mouse_focus: false,
         }
+    }
+
+    /// Gives YakuiMiniQuad owned control over the context, allowing it to
+    /// behave as an event handler directly, as well as deleting all managed
+    /// textures on drop.
+    pub fn into_owned_event_handler(self, ctx: Box<Context>) -> YakuiMiniQuadOwnedHandler {
+        YakuiMiniQuadOwnedHandler::new(ctx, self)
+    }
+
+    /// Gives YakuiMiniQuad a temporary reference to the context, allowing it
+    /// to behave as a Miniquad event handler
+    ///
+    /// This is useful when you don't own the MiniQuad context directly, such
+    /// as in Macroquad game
+    pub fn as_event_handler<'a>(&'a mut self, ctx: &'a mut Context) -> YakuiMiniQuadRefHandler<'a> {
+        YakuiMiniQuadRefHandler::new(ctx, self)
     }
 
     /// Returns true if the last mouse or keyboard event was sunk by yakui, and should not be handled by your game.
@@ -204,52 +204,19 @@ impl YakuiMiniQuad {
     }
 
     /// Renders the queued ui draw commands.
-    pub fn draw(&mut self, ctx: &mut GraphicsContext) {
-        self.state.paint(&mut self.ui, ctx);
+    pub fn draw(&mut self, ctx: &mut Context) {
+        self.state.paint(ctx, &mut self.ui);
     }
-}
 
-pub struct YakuiMiniquadState {
-    main_pipeline: Pipeline,
-    text_pipeline: Pipeline,
-    textures: HashMap<yakui_core::ManagedTextureId, Texture>,
-    layout: Bindings,
-
-    default_texture: Texture,
-    vertices: Buffer,
-    indices: Buffer,
-    commands: Vec<DrawCommand>,
-}
-
-impl Drop for YakuiMiniquadState {
-    fn drop(&mut self) {
-        for (_, texture) in &self.textures {
-            texture.delete();
-        }
-    }
-}
-
-struct DrawCommand {
-    index_range: Range<u32>,
-    texture: Texture,
-    pipeline: yakui_core::paint::Pipeline,
-    clip: Option<Rect>,
-}
-
-impl EventHandler for YakuiMiniQuad {
-    fn mouse_motion_event(&mut self, _ctx: &mut Context, x: f32, y: f32) {
+    /// Implementation of event handler methods but taking external context
+    pub fn mouse_motion_event(&mut self, _ctx: &mut Context, x: f32, y: f32) {
         let mouse_position = yakui_core::geometry::Vec2::new(x, y);
         self.ui
             .handle_event(Event::CursorMoved(Some(mouse_position)));
     }
 
-    fn mouse_button_down_event(
-        &mut self,
-        _ctx: &mut Context,
-        button: MouseButton,
-        _x: f32,
-        _y: f32,
-    ) {
+    /// Implementation of event handler methods but taking external context
+    pub fn mouse_button_down_event(&mut self, _ctx: &mut Context, button: MouseButton, _x: f32, _y: f32) {
         if let Some(mouse_button) = miniquad_mouse_button_to_yakui(button) {
             self.has_mouse_focus = self.ui.handle_event(Event::MouseButtonChanged {
                 button: mouse_button,
@@ -258,7 +225,8 @@ impl EventHandler for YakuiMiniQuad {
         }
     }
 
-    fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: MouseButton, _x: f32, _y: f32) {
+    /// Implementation of event handler methods but taking external context
+    pub fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: MouseButton, _x: f32, _y: f32) {
         if let Some(mouse_button) = miniquad_mouse_button_to_yakui(button) {
             self.has_mouse_focus = self.ui.handle_event(Event::MouseButtonChanged {
                 button: mouse_button,
@@ -267,13 +235,8 @@ impl EventHandler for YakuiMiniQuad {
         }
     }
 
-    fn key_down_event(
-        &mut self,
-        _ctx: &mut Context,
-        keycode: KeyCode,
-        _keymods: KeyMods,
-        _repeat: bool,
-    ) {
+    /// Implementation of event handler methods but taking external context
+    pub fn key_down_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
         if let Some(key_code) = miniquad_key_to_yakui(keycode) {
             self.has_keyboard_focus = self.ui.handle_event(Event::KeyChanged {
                 key: key_code,
@@ -282,7 +245,8 @@ impl EventHandler for YakuiMiniQuad {
         }
     }
 
-    fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymods: KeyMods) {
+    /// Implementation of event handler methods but taking external context
+    pub fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymods: KeyMods) {
         if let Some(key_code) = miniquad_key_to_yakui(keycode) {
             self.has_keyboard_focus = self.ui.handle_event(Event::KeyChanged {
                 key: key_code,
@@ -291,23 +255,20 @@ impl EventHandler for YakuiMiniQuad {
         }
     }
 
-    fn mouse_wheel_event(&mut self, _ctx: &mut Context, x: f32, y: f32) {
+    /// Implementation of event handler methods but taking external context
+    pub fn mouse_wheel_event(&mut self, _ctx: &mut Context, x: f32, y: f32) {
         self.has_mouse_focus = self.ui.handle_event(Event::MouseScroll {
             delta: yakui_core::geometry::Vec2 { x, y },
         });
     }
 
-    fn char_event(
-        &mut self,
-        _ctx: &mut Context,
-        character: char,
-        _keymods: KeyMods,
-        _repeat: bool,
-    ) {
+    /// Implementation of event handler methods but taking external context
+    pub fn char_event(&mut self, _ctx: &mut Context, character: char, _keymods: KeyMods, _repeat: bool) {
         self.has_keyboard_focus = self.ui.handle_event(Event::TextInput(character));
     }
 
-    fn resize_event(&mut self, _ctx: &mut Context, width: f32, height: f32) {
+    /// Implementation of event handler methods but taking external context
+    pub fn resize_event(&mut self, _ctx: &mut Context, width: f32, height: f32) {
         let viewport_position = yakui_core::geometry::Vec2 { x: 0.0, y: 0.0 };
         let viewport_size = yakui_core::geometry::Vec2 {
             x: width,
@@ -320,10 +281,11 @@ impl EventHandler for YakuiMiniQuad {
             )));
     }
 
-    fn update(&mut self, ctx: &mut Context) {
-        let (screen_w, screen_h) = ctx.screen_size();
+    /// Implementation of event handler methods but taking external context
+    pub fn update(&mut self, _ctx: &mut Context) {
+        let (screen_w, screen_h) = screen_size();
 
-        self.ui.set_scale_factor(ctx.dpi_scale());
+        self.ui.set_scale_factor(dpi_scale());
         self.ui.set_surface_size(yakui_core::geometry::Vec2 {
             x: screen_w,
             y: screen_h,
@@ -334,14 +296,29 @@ impl EventHandler for YakuiMiniQuad {
                 [screen_w, screen_h].into(),
             ));
     }
+}
 
-    fn draw(&mut self, ctx: &mut Context) {
-        self.state.paint(&mut self.ui, ctx);
-    }
+pub struct YakuiMiniquadState {
+    main_pipeline: Pipeline,
+    text_pipeline: Pipeline,
+    textures: HashMap<yakui_core::ManagedTextureId, TextureId>,
+    layout: Bindings,
+
+    default_texture: TextureId,
+    vertices: BufferId,
+    indices: BufferId,
+    commands: Vec<DrawCommand>,
+}
+
+struct DrawCommand {
+    index_range: Range<u32>,
+    texture: TextureId,
+    pipeline: yakui_core::paint::Pipeline,
+    clip: Option<Rect>,
 }
 
 impl YakuiMiniquadState {
-    pub fn new(ctx: &mut GraphicsContext) -> Self {
+    pub fn new(mut ctx: &mut Context) -> Self {
         let main_pipeline = make_main_pipeline(
             ctx,
             &[BufferLayout::default()],
@@ -364,8 +341,8 @@ impl YakuiMiniquadState {
 
         let textures = HashMap::new();
 
-        let vertex_buffers = vec![Buffer::stream(ctx, BufferType::VertexBuffer, 1)];
-        let index_buffer = Buffer::stream(ctx, BufferType::IndexBuffer, 1);
+        let vertex_buffers = vec![ctx.new_buffer(BufferType::VertexBuffer, BufferUsage::Stream, BufferSource::empty::<yakui_core::paint::Vertex>(1))];
+        let index_buffer = ctx.new_buffer(BufferType::IndexBuffer, BufferUsage::Stream, BufferSource::empty::<u16>(1));
 
         let layout = Bindings {
             vertex_buffers,
@@ -373,18 +350,17 @@ impl YakuiMiniquadState {
             images: Vec::new(),
         };
 
-        let default_texture = Texture::new(
-            ctx,
-            TextureAccess::Static,
-            Some(&[255, 255, 255, 255]),
-            TextureParams {
-                format: TextureFormat::RGBA8,
-                wrap: TextureWrap::Clamp,
-                filter: FilterMode::Linear,
-                width: 1,
-                height: 1,
-            },
-        );
+        let default_texture = ctx.new_texture(TextureAccess::Static, TextureSource::Bytes(&[255, 255, 255, 255]), TextureParams {
+            kind: TextureKind::Texture2D,
+            format: TextureFormat::RGBA8,
+            wrap: TextureWrap::Clamp,
+            min_filter: FilterMode::Linear,
+            mag_filter: FilterMode::Linear,
+            width: 1,
+            height: 1,
+            mipmap_filter: MipmapFilterMode::None,
+            allocate_mipmaps: false,
+        });
 
         YakuiMiniquadState {
             main_pipeline,
@@ -392,13 +368,19 @@ impl YakuiMiniquadState {
             textures,
             layout,
             default_texture,
-            vertices: Buffer::stream(ctx, BufferType::VertexBuffer, 1),
-            indices: Buffer::stream(ctx, BufferType::IndexBuffer, 1),
+            vertices: ctx.new_buffer(BufferType::VertexBuffer, BufferUsage::Stream, BufferSource::empty::<yakui_core::paint::Vertex>(1)),
+            indices: ctx.new_buffer(BufferType::IndexBuffer, BufferUsage::Stream, BufferSource::empty::<u16>(1)),
             commands: Vec::new(),
         }
     }
 
-    pub fn paint(&mut self, state: &mut yakui_core::Yakui, ctx: &mut GraphicsContext) {
+    pub fn drop_textures(&mut self, ctx: &mut Context) {
+        for (_, texture) in &self.textures {
+            ctx.delete_texture(*texture);
+        }
+    }
+
+    pub fn paint(&mut self, ctx: &mut Context, state: &mut yakui_core::Yakui) {
         let paint = state.paint();
 
         self.update_textures(ctx, paint);
@@ -470,7 +452,7 @@ impl YakuiMiniquadState {
         }
     }
 
-    fn update_buffers(&mut self, ctx: &mut GraphicsContext, paint: &PaintDom) {
+    fn update_buffers(&mut self, ctx: &mut Context, paint: &PaintDom) {
         let commands = paint.calls();
         self.commands.clear();
 
@@ -512,31 +494,31 @@ impl YakuiMiniquadState {
 
         // upload the buffers at last
         let size_of_vertex_data_in_bytes =
-            draw_vertices.len() * std::mem::size_of::<yakui_core::paint::Vertex>();
-        if self.vertices.size() < size_of_vertex_data_in_bytes {
-            self.vertices.delete();
-            self.vertices =
-                Buffer::stream(ctx, BufferType::VertexBuffer, size_of_vertex_data_in_bytes);
-            self.vertices.update(ctx, &draw_vertices);
+            draw_vertices.len() * size_of::<yakui_core::paint::Vertex>();
+        if ctx.buffer_size(self.vertices) < size_of_vertex_data_in_bytes {
+            ctx.delete_buffer(self.vertices);
+            self.vertices = ctx.new_buffer(BufferType::VertexBuffer, BufferUsage::Stream, BufferSource::empty::<yakui_core::paint::Vertex>(size_of_vertex_data_in_bytes));
+            ctx.buffer_update(self.vertices, BufferSource::slice(&draw_vertices));
             self.layout.vertex_buffers = vec![self.vertices];
         } else {
-            self.vertices.update(ctx, &draw_vertices);
+            ctx.buffer_update(self.vertices, BufferSource::slice(&draw_vertices));
         }
 
-        let size_of_index_data_in_bytes = draw_indices.len() * std::mem::size_of::<u16>();
-        if self.indices.size() < size_of_index_data_in_bytes {
-            self.indices.delete();
-            self.indices = Buffer::index_stream(ctx, IndexType::Short, size_of_index_data_in_bytes);
-            self.indices.update(ctx, &draw_indices);
+        let size_of_index_data_in_bytes = draw_indices.len() * size_of::<u16>();
+
+        if ctx.buffer_size(self.indices) < size_of_index_data_in_bytes {
+            ctx.delete_buffer(self.indices);
+            self.indices = ctx.new_buffer(BufferType::IndexBuffer, BufferUsage::Stream, BufferSource::empty::<u16>(size_of_index_data_in_bytes));
+            ctx.buffer_update(self.indices, BufferSource::slice(&draw_indices));
             self.layout.index_buffer = self.indices;
         } else {
-            self.indices.update(ctx, &draw_indices);
+            ctx.buffer_update(self.indices, BufferSource::slice(&draw_indices));
         }
 
         self.commands.extend(draw_commands);
     }
 
-    fn update_textures(&mut self, ctx: &mut GraphicsContext, paint: &PaintDom) {
+    fn update_textures(&mut self, ctx: &mut Context, paint: &PaintDom) {
         for (id, texture) in paint.textures() {
             if self.textures.contains_key(&id) == false {
                 self.textures.insert(id, make_texture(ctx, texture));
@@ -551,13 +533,13 @@ impl YakuiMiniquadState {
                 }
                 yakui_core::paint::TextureChange::Removed => {
                     if let Some(t) = self.textures.remove(&id) {
-                        t.delete();
+                        ctx.delete_texture(t);
                     }
                 }
                 yakui_core::paint::TextureChange::Modified => {
                     if let Some(existing) = self.textures.get_mut(&id) {
                         let texture = paint.texture(id).unwrap();
-                        existing.update(ctx, texture.data());
+                        ctx.texture_update(*existing, texture.data());
                     }
                 }
             }
@@ -700,10 +682,10 @@ fn miniquad_key_to_yakui(key: KeyCode) -> Option<YakuiKeyCode> {
     }
 }
 
-fn resolve_texture_format(format: paint::TextureFormat) -> TextureFormat {
+fn resolve_texture_format(format: yakui_core::paint::TextureFormat) -> TextureFormat {
     match format {
-        paint::TextureFormat::Rgba8Srgb => TextureFormat::RGBA8,
-        paint::TextureFormat::R8 => TextureFormat::Alpha,
+        yakui_core::paint::TextureFormat::Rgba8Srgb => TextureFormat::RGBA8,
+        yakui_core::paint::TextureFormat::R8 => TextureFormat::Alpha,
         _ => panic!(
             "[yakui-miniquad]: got unexpected texture format: {:?}",
             format
@@ -711,20 +693,25 @@ fn resolve_texture_format(format: paint::TextureFormat) -> TextureFormat {
     }
 }
 
-fn make_texture(ctx: &mut GraphicsContext, texture: &paint::Texture) -> Texture {
+fn make_texture(ctx: &mut Context, texture: &yakui_core::paint::Texture) -> TextureId {
     let texture_format = resolve_texture_format(texture.format());
     let dimensions = texture.size();
-    Texture::from_data_and_format(
-        ctx,
+
+    let id = ctx.new_texture_from_data_and_format(
         texture.data(),
         TextureParams {
+            kind: TextureKind::Texture2D,
             format: texture_format,
             wrap: TextureWrap::Clamp,
-            filter: FilterMode::Linear,
+            min_filter: FilterMode::Linear,
+            mag_filter: FilterMode::Linear,
             width: dimensions.x,
             height: dimensions.y,
+            mipmap_filter: MipmapFilterMode::None,
+            allocate_mipmaps: false,
         },
-    )
+    );
+    id
 }
 
 fn make_alpha_blend_state() -> BlendState {
@@ -744,17 +731,19 @@ fn make_premultiplied_alpha_blend_state() -> BlendState {
 }
 
 fn make_main_pipeline(
-    ctx: &mut GraphicsContext,
+    ctx: &mut Context,
     buffers: &[BufferLayout],
     attributes: &[VertexAttribute],
 ) -> Pipeline {
-    let main_shader = Shader::new(
-        ctx,
-        yakui_shader_main::VERTEX,
-        yakui_shader_main::FRAGMENT,
-        yakui_shader_main::meta(),
-    )
-    .expect("[yakui-miniquad]: could not compile main shader!");
+    let main_shader = ctx
+        .new_shader(
+            ShaderSource::Glsl {
+                vertex: yakui_shader_main::VERTEX,
+                fragment: yakui_shader_main::FRAGMENT,
+            },
+            yakui_shader_main::meta(),
+        )
+        .expect("[yakui-miniquad]: could not compile main shader!");
 
     let pipeline_params = PipelineParams {
         cull_face: CullFace::Nothing,
@@ -769,20 +758,22 @@ fn make_main_pipeline(
         primitive_type: PrimitiveType::Triangles,
     };
 
-    Pipeline::with_params(ctx, buffers, attributes, main_shader, pipeline_params)
+    ctx.new_pipeline(buffers, attributes, main_shader, pipeline_params)
 }
 
 fn make_text_pipeline(
-    ctx: &mut GraphicsContext,
+    ctx: &mut Context,
     buffers: &[BufferLayout],
     attributes: &[VertexAttribute],
 ) -> Pipeline {
-    let text_shader = Shader::new(
-        ctx,
-        yakui_shader_text::VERTEX,
-        yakui_shader_text::FRAGMENT,
-        yakui_shader_text::meta(),
-    )
+    let text_shader = ctx
+        .new_shader(
+            ShaderSource::Glsl {
+                vertex: yakui_shader_text::VERTEX,
+                fragment: yakui_shader_text::FRAGMENT,
+            },
+            yakui_shader_text::meta(),
+        )
     .expect("[yakui-miniquad]: could not compile text shader!");
 
     let pipeline_params = PipelineParams {
@@ -798,7 +789,7 @@ fn make_text_pipeline(
         primitive_type: PrimitiveType::Triangles,
     };
 
-    Pipeline::with_params(ctx, buffers, attributes, text_shader, pipeline_params)
+    ctx.new_pipeline(buffers, attributes, text_shader, pipeline_params)
 }
 
 mod yakui_shader_main {
