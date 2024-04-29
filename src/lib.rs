@@ -14,57 +14,23 @@
 //! use yakui::{widgets::Pad, Color};
 //!
 //! use yakui_miniquad::*;
-//! use yakui_miniquad::event_handlers::YakuiMiniQuadOwnedHandler;
 //!
 //! struct Stage {
-//!     yakui_mq: YakuiMiniQuadOwnedHandler,
+//!     ctx: Box<Context>,
+//!     yakui_mq: YakuiMiniQuad,
 //! }
 //!
 //! impl Stage {
 //!     pub fn new(mut ctx: Box<Context>) -> Stage {
-//!         let yakui_mq = YakuiMiniQuad::new(ctx.deref_mut()).into_owned_event_handler(ctx);
-//!         Stage { yakui_mq }
+//!         let yakui_mq = YakuiMiniQuad::new(ctx.deref_mut());
+//!         Stage {
+//!             ctx,
+//!             yakui_mq
+//!         }
 //!     }
 //! }
 //!
 //! impl EventHandler for Stage {
-//!     fn mouse_motion_event(&mut self, x: f32, y: f32) {
-//!         self.yakui_mq.mouse_motion_event(x, y);
-//!     }
-//!
-//!     fn mouse_button_down_event(&mut self, button: MouseButton, x: f32, y: f32) {
-//!         self.yakui_mq.mouse_button_down_event(button, x, y);
-//!     }
-//!
-//!     fn mouse_button_up_event(&mut self, button: MouseButton, x: f32, y: f32) {
-//!         self.yakui_mq.mouse_button_up_event(button, x, y);
-//!     }
-//!
-//!     fn key_down_event(
-//!         &mut self,
-//!         keycode: KeyCode,
-//!         keymods: KeyMods,
-//!         repeat: bool,
-//!     ) {
-//!         self.yakui_mq.key_down_event(keycode, keymods, repeat);
-//!     }
-//!
-//!     fn key_up_event(&mut self, keycode: KeyCode, keymods: KeyMods) {
-//!         self.yakui_mq.key_up_event(keycode, keymods);
-//!     }
-//!
-//!     fn mouse_wheel_event(&mut self, x: f32, y: f32) {
-//!         self.yakui_mq.mouse_wheel_event(x, y);
-//!     }
-//!
-//!     fn char_event(&mut self, character: char, keymods: KeyMods, repeat: bool) {
-//!         self.yakui_mq.char_event(character, keymods, repeat);
-//!     }
-//!
-//!     fn resize_event(&mut self, width: f32, height: f32) {
-//!         self.yakui_mq.resize_event(width, height);
-//!     }
-//!
 //!     fn update(&mut self) {
 //!         self.yakui_mq.start();
 //!
@@ -80,19 +46,54 @@
 //!     }
 //!
 //!     fn draw(&mut self) {
-//!         self.yakui_mq.miniquad_ctx().begin_default_pass(Default::default());
+//!         self.ctx.begin_default_pass(Default::default());
 //!
 //!         // draw some stuff before the UI?
 //!
-//!         self.yakui_mq.draw();
+//!         self.yakui_mq.draw(self.ctx.deref_mut());
 //!
 //!         // ... draw some stuff after the UI!
 //!
-//!         let ctx = self.yakui_mq.miniquad_ctx();
+//!         self.ctx.end_render_pass();
 //!
-//!         ctx.end_render_pass();
+//!         self.ctx.commit_frame();
+//!     }
 //!
-//!         ctx.commit_frame();
+//!     fn resize_event(&mut self, width: f32, height: f32) {
+//!         self.yakui_mq.resize_event(width, height);
+//!     }
+//!
+//!     fn mouse_motion_event(&mut self, x: f32, y: f32) {
+//!         self.yakui_mq.mouse_motion_event(x, y);
+//!     }
+//!
+//!     fn mouse_wheel_event(&mut self, x: f32, y: f32) {
+//!         self.yakui_mq.mouse_wheel_event(x, y);
+//!     }
+//!
+//!     fn mouse_button_down_event(&mut self, button: MouseButton, x: f32, y: f32) {
+//!         self.yakui_mq.mouse_button_down_event(button, x, y);
+//!     }
+//!
+//!     fn mouse_button_up_event(&mut self, button: MouseButton, x: f32, y: f32) {
+//!         self.yakui_mq.mouse_button_up_event(button, x, y);
+//!     }
+//!
+//!     fn char_event(&mut self, character: char, keymods: KeyMods, repeat: bool) {
+//!         self.yakui_mq.char_event(character, keymods, repeat);
+//!     }
+//!
+//!     fn key_down_event(
+//!         &mut self,
+//!         keycode: KeyCode,
+//!         keymods: KeyMods,
+//!         repeat: bool,
+//!     ) {
+//!         self.yakui_mq.key_down_event(keycode, keymods, repeat);
+//!     }
+//!
+//!     fn key_up_event(&mut self, keycode: KeyCode, keymods: KeyMods) {
+//!         self.yakui_mq.key_up_event(keycode, keymods);
 //!     }
 //! }
 //!
@@ -105,7 +106,6 @@
 
 use std::{collections::HashMap, ops::Range};
 use std::mem::size_of;
-use std::ops::DerefMut;
 
 use miniquad::{TextureId, BufferId, BufferSource, BufferLayout, BufferUsage, Pipeline, Bindings, EventHandler, MouseButton, KeyCode, KeyMods, Context, VertexAttribute, VertexFormat, RenderingBackend, TextureAccess, TextureSource, TextureParams, TextureKind, TextureFormat, TextureWrap, FilterMode, MipmapFilterMode, BufferType, BlendState, Equation, BlendFactor, BlendValue, ShaderSource, PipelineParams, CullFace, FrontFaceOrder, Comparison, PrimitiveType};
 use miniquad::window::{dpi_scale, screen_size};
@@ -116,9 +116,6 @@ use yakui_core::input::MouseButton as YakuiMouseButton;
 
 pub use miniquad;
 pub use yakui_core;
-use crate::event_handlers::{YakuiMiniQuadOwnedHandler, YakuiMiniQuadRefHandler};
-
-pub mod event_handlers;
 
 #[repr(C)]
 struct YakuiVertex {
@@ -144,22 +141,6 @@ impl YakuiMiniQuad {
         }
     }
 
-    /// Gives YakuiMiniQuad owned control over the context, allowing it to
-    /// behave as an event handler directly, as well as deleting all managed
-    /// textures on drop.
-    pub fn into_owned_event_handler(self, ctx: Box<Context>) -> YakuiMiniQuadOwnedHandler {
-        YakuiMiniQuadOwnedHandler::new(ctx, self)
-    }
-
-    /// Gives YakuiMiniQuad a temporary reference to the context, allowing it
-    /// to behave as a Miniquad event handler
-    ///
-    /// This is useful when you don't own the MiniQuad context directly, such
-    /// as in Macroquad game
-    pub fn as_event_handler<'a>(&'a mut self, ctx: &'a mut Context) -> YakuiMiniQuadRefHandler<'a> {
-        YakuiMiniQuadRefHandler::new(ctx, self)
-    }
-
     /// Returns true if the last mouse or keyboard event was sunk by yakui, and should not be handled by your game.
     pub fn has_input_focus(&self) -> bool {
         self.has_mouse_focus || self.has_keyboard_focus
@@ -181,8 +162,8 @@ impl YakuiMiniQuad {
     }
 
     /// Updates the viewport size and calls start on the internal yakui context, binding it to the current thread.
-    pub fn start(&mut self, ctx: &mut Context) {
-        self.update(ctx);
+    pub fn start(&mut self) {
+        self.update();
         self.ui.start();
     }
 
@@ -192,11 +173,11 @@ impl YakuiMiniQuad {
     }
 
     /// Wraps calling start and finish, where start will now be called before your closure is invoked and finish will be invoked after.
-    pub fn run<F>(&mut self, ctx: &mut Context, ui_update_function: F)
+    pub fn run<F>(&mut self, ui_update_function: F)
     where
         F: FnOnce(&mut Yakui) -> (),
     {
-        self.update(ctx);
+        self.update();
 
         self.ui.start();
         ui_update_function(&mut self.ui);
@@ -207,90 +188,10 @@ impl YakuiMiniQuad {
     pub fn draw(&mut self, ctx: &mut Context) {
         self.state.paint(ctx, &mut self.ui);
     }
+}
 
-    /// Implementation of event handler methods but taking external context
-    pub fn mouse_motion_event(&mut self, _ctx: &mut Context, x: f32, y: f32) {
-        let mouse_position = yakui_core::geometry::Vec2::new(x, y);
-        self.ui
-            .handle_event(Event::CursorMoved(Some(mouse_position)));
-    }
-
-    /// Implementation of event handler methods but taking external context
-    pub fn mouse_button_down_event(&mut self, _ctx: &mut Context, button: MouseButton, _x: f32, _y: f32) {
-        if let Some(mouse_button) = miniquad_mouse_button_to_yakui(button) {
-            self.has_mouse_focus = self.ui.handle_event(Event::MouseButtonChanged {
-                button: mouse_button,
-                down: true,
-            });
-        }
-    }
-
-    /// Implementation of event handler methods but taking external context
-    pub fn mouse_button_up_event(&mut self, _ctx: &mut Context, button: MouseButton, _x: f32, _y: f32) {
-        if let Some(mouse_button) = miniquad_mouse_button_to_yakui(button) {
-            self.has_mouse_focus = self.ui.handle_event(Event::MouseButtonChanged {
-                button: mouse_button,
-                down: false,
-            });
-        }
-    }
-
-    /// Implementation of event handler methods but taking external context
-    pub fn key_down_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
-        if let Some(key_code) = miniquad_key_to_yakui(keycode) {
-            self.has_keyboard_focus = self.ui.handle_event(Event::KeyChanged {
-                key: key_code,
-                down: true,
-            });
-        }
-    }
-
-    /// Implementation of event handler methods but taking external context
-    pub fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymods: KeyMods) {
-        if let Some(key_code) = miniquad_key_to_yakui(keycode) {
-            self.has_keyboard_focus = self.ui.handle_event(Event::KeyChanged {
-                key: key_code,
-                down: false,
-            });
-        }
-    }
-
-    /// Implementation of event handler methods but taking external context
-    pub fn mouse_wheel_event(&mut self, _ctx: &mut Context, x: f32, y: f32) {
-        self.has_mouse_focus = self.ui.handle_event(Event::MouseScroll {
-            delta: yakui_core::geometry::Vec2 { x, y },
-        });
-    }
-
-    /// Implementation of event handler methods but taking external context
-    pub fn char_event(&mut self, _ctx: &mut Context, character: char, _keymods: KeyMods, _repeat: bool) {
-        match character {
-            '\u{E000}'..='\u{F8FF}'
-            => {
-                // Skip unicode private use area, which miniquad seems to emit
-                // for non-character button presses. A bug in miniquad?
-            },
-            _ => self.has_keyboard_focus = self.ui.handle_event(Event::TextInput(character)),
-        }
-       ;
-    }
-
-    /// Implementation of event handler methods but taking external context
-    pub fn resize_event(&mut self, _ctx: &mut Context, width: f32, height: f32) {
-        let viewport_position = yakui_core::geometry::Vec2 { x: 0.0, y: 0.0 };
-        let viewport_size = yakui_core::geometry::Vec2 {
-            x: width,
-            y: height,
-        };
-        self.ui
-            .handle_event(Event::ViewportChanged(Rect::from_pos_size(
-                viewport_position,
-                viewport_size,
-            )));
-    }
-
-    /// Implementation of event handler methods but taking external context
-    pub fn update(&mut self, _ctx: &mut Context) {
+impl EventHandler for YakuiMiniQuad {
+    fn update(&mut self) {
         let (screen_w, screen_h) = screen_size();
 
         self.ui.set_scale_factor(dpi_scale());
@@ -303,6 +204,82 @@ impl YakuiMiniQuad {
                 Default::default(),
                 [screen_w, screen_h].into(),
             ));
+    }
+
+    fn draw(&mut self) {
+        panic!("[yakui-miniquad]: YakuiMiniQuad cannot draw as an event handler, please wrap it with a custom event handler that calls `YakuiMiniQuad::draw(&mut self, &mut Context)`")
+    }
+
+    fn resize_event(&mut self, width: f32, height: f32) {
+        let viewport_position = yakui_core::geometry::Vec2 { x: 0.0, y: 0.0 };
+        let viewport_size = yakui_core::geometry::Vec2 {
+            x: width,
+            y: height,
+        };
+        self.ui
+            .handle_event(Event::ViewportChanged(Rect::from_pos_size(
+                viewport_position,
+                viewport_size,
+            )));
+    }
+
+    fn mouse_motion_event(&mut self, x: f32, y: f32) {
+        let mouse_position = yakui_core::geometry::Vec2::new(x, y);
+        self.ui
+            .handle_event(Event::CursorMoved(Some(mouse_position)));
+    }
+
+    fn mouse_wheel_event(&mut self, x: f32, y: f32) {
+        self.has_mouse_focus = self.ui.handle_event(Event::MouseScroll {
+            delta: yakui_core::geometry::Vec2 { x, y },
+        });
+    }
+
+    fn mouse_button_down_event(&mut self, button: MouseButton, _x: f32, _y: f32) {
+        if let Some(mouse_button) = miniquad_mouse_button_to_yakui(button) {
+            self.has_mouse_focus = self.ui.handle_event(Event::MouseButtonChanged {
+                button: mouse_button,
+                down: true,
+            });
+        }
+    }
+
+    fn mouse_button_up_event(&mut self, button: MouseButton, _x: f32, _y: f32) {
+        if let Some(mouse_button) = miniquad_mouse_button_to_yakui(button) {
+            self.has_mouse_focus = self.ui.handle_event(Event::MouseButtonChanged {
+                button: mouse_button,
+                down: false,
+            });
+        }
+    }
+
+    fn char_event(&mut self, character: char, _keymods: KeyMods, _repeat: bool) {
+        match character {
+            '\u{E000}'..='\u{F8FF}'
+            => {
+                // Skip unicode private use area, which miniquad seems to emit
+                // for non-character button presses. A bug in miniquad?
+            },
+            _ => self.has_keyboard_focus = self.ui.handle_event(Event::TextInput(character)),
+        }
+    }
+
+    fn key_down_event(&mut self, keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
+        if let Some(key_code) = miniquad_key_to_yakui(keycode) {
+            self.has_keyboard_focus = self.ui.handle_event(Event::KeyChanged {
+                key: key_code,
+                down: true,
+            });
+        }
+    }
+
+    fn key_up_event(&mut self, keycode: KeyCode, _keymods: KeyMods) {
+        if let Some(key_code) = miniquad_key_to_yakui(keycode) {
+            self.has_keyboard_focus = self.ui.handle_event(Event::KeyChanged {
+                key: key_code,
+                down: false,
+            });
+        }
     }
 }
 
