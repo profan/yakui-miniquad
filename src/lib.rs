@@ -112,8 +112,8 @@ use miniquad::{
     Bindings, BlendFactor, BlendState, BlendValue, BufferId, BufferLayout, BufferSource,
     BufferType, BufferUsage, Comparison, Context, CullFace, Equation, EventHandler, FilterMode,
     FrontFaceOrder, KeyCode, KeyMods, MipmapFilterMode, MouseButton, Pipeline, PipelineParams,
-    PrimitiveType, RenderingBackend, ShaderSource, TextureAccess, TextureFormat, TextureId,
-    TextureKind, TextureParams, TextureSource, TextureWrap, VertexAttribute, VertexFormat,
+    PrimitiveType, ShaderSource, TextureAccess, TextureFormat, TextureId, TextureKind,
+    TextureParams, TextureSource, TextureWrap, VertexAttribute, VertexFormat,
 };
 use yakui_core::geometry::Rect;
 use yakui_core::input::KeyCode as YakuiKeyCode;
