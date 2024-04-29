@@ -264,7 +264,15 @@ impl YakuiMiniQuad {
 
     /// Implementation of event handler methods but taking external context
     pub fn char_event(&mut self, _ctx: &mut Context, character: char, _keymods: KeyMods, _repeat: bool) {
-        self.has_keyboard_focus = self.ui.handle_event(Event::TextInput(character));
+        match character {
+            '\u{E000}'..='\u{F8FF}'
+            => {
+                // Skip unicode private use area, which miniquad seems to emit
+                // for non-character button presses. A bug in miniquad?
+            },
+            _ => self.has_keyboard_focus = self.ui.handle_event(Event::TextInput(character)),
+        }
+       ;
     }
 
     /// Implementation of event handler methods but taking external context
