@@ -1,7 +1,7 @@
 use std::ops::DerefMut;
 
-use miniquad::*;
 use miniquad::window::new_rendering_backend;
+use miniquad::*;
 use yakui::{widgets::Pad, Color};
 
 use yakui_miniquad::*;
@@ -14,10 +14,7 @@ struct Stage {
 impl Stage {
     pub fn new(mut ctx: Box<Context>) -> Stage {
         let yakui_mq = YakuiMiniQuad::new(ctx.deref_mut());
-        Stage {
-            ctx,
-            yakui_mq
-        }
+        Stage { ctx, yakui_mq }
     }
 }
 
@@ -74,12 +71,7 @@ impl EventHandler for Stage {
         self.yakui_mq.char_event(character, keymods, repeat);
     }
 
-    fn key_down_event(
-        &mut self,
-        keycode: KeyCode,
-        keymods: KeyMods,
-        repeat: bool,
-    ) {
+    fn key_down_event(&mut self, keycode: KeyCode, keymods: KeyMods, repeat: bool) {
         self.yakui_mq.key_down_event(keycode, keymods, repeat);
     }
 

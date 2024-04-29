@@ -104,15 +104,21 @@
 //! }
 //!```
 
-use std::{collections::HashMap, ops::Range};
 use std::mem::size_of;
+use std::{collections::HashMap, ops::Range};
 
-use miniquad::{TextureId, BufferId, BufferSource, BufferLayout, BufferUsage, Pipeline, Bindings, EventHandler, MouseButton, KeyCode, KeyMods, Context, VertexAttribute, VertexFormat, RenderingBackend, TextureAccess, TextureSource, TextureParams, TextureKind, TextureFormat, TextureWrap, FilterMode, MipmapFilterMode, BufferType, BlendState, Equation, BlendFactor, BlendValue, ShaderSource, PipelineParams, CullFace, FrontFaceOrder, Comparison, PrimitiveType};
 use miniquad::window::{dpi_scale, screen_size};
-use yakui_core::{event::Event, paint::PaintDom, Yakui};
+use miniquad::{
+    Bindings, BlendFactor, BlendState, BlendValue, BufferId, BufferLayout, BufferSource,
+    BufferType, BufferUsage, Comparison, Context, CullFace, Equation, EventHandler, FilterMode,
+    FrontFaceOrder, KeyCode, KeyMods, MipmapFilterMode, MouseButton, Pipeline, PipelineParams,
+    PrimitiveType, RenderingBackend, ShaderSource, TextureAccess, TextureFormat, TextureId,
+    TextureKind, TextureParams, TextureSource, TextureWrap, VertexAttribute, VertexFormat,
+};
 use yakui_core::geometry::Rect;
 use yakui_core::input::KeyCode as YakuiKeyCode;
 use yakui_core::input::MouseButton as YakuiMouseButton;
+use yakui_core::{event::Event, paint::PaintDom, Yakui};
 
 pub use miniquad;
 pub use yakui_core;
@@ -175,7 +181,7 @@ impl YakuiMiniQuad {
     /// Wraps calling start and finish, where start will now be called before your closure is invoked and finish will be invoked after.
     pub fn run<F>(&mut self, ui_update_function: F)
     where
-        F: FnOnce(&mut Yakui) -> (),
+        F: FnOnce(&mut Yakui),
     {
         self.update();
 
@@ -255,11 +261,10 @@ impl EventHandler for YakuiMiniQuad {
 
     fn char_event(&mut self, character: char, _keymods: KeyMods, _repeat: bool) {
         match character {
-            '\u{E000}'..='\u{F8FF}'
-            => {
+            '\u{E000}'..='\u{F8FF}' => {
                 // Skip unicode private use area, which miniquad seems to emit
                 // for non-character button presses. A bug in miniquad?
-            },
+            }
             _ => self.has_keyboard_focus = self.ui.handle_event(Event::TextInput(character)),
         }
     }
@@ -303,7 +308,7 @@ struct DrawCommand {
 }
 
 impl YakuiMiniquadState {
-    pub fn new(mut ctx: &mut Context) -> Self {
+    pub fn new(ctx: &mut Context) -> Self {
         let main_pipeline = make_main_pipeline(
             ctx,
             &[BufferLayout::default()],
@@ -326,8 +331,16 @@ impl YakuiMiniquadState {
 
         let textures = HashMap::new();
 
-        let vertex_buffers = vec![ctx.new_buffer(BufferType::VertexBuffer, BufferUsage::Stream, BufferSource::empty::<yakui_core::paint::Vertex>(1))];
-        let index_buffer = ctx.new_buffer(BufferType::IndexBuffer, BufferUsage::Stream, BufferSource::empty::<u16>(1));
+        let vertex_buffers = vec![ctx.new_buffer(
+            BufferType::VertexBuffer,
+            BufferUsage::Stream,
+            BufferSource::empty::<yakui_core::paint::Vertex>(1),
+        )];
+        let index_buffer = ctx.new_buffer(
+            BufferType::IndexBuffer,
+            BufferUsage::Stream,
+            BufferSource::empty::<u16>(1),
+        );
 
         let layout = Bindings {
             vertex_buffers,
@@ -335,17 +348,21 @@ impl YakuiMiniquadState {
             images: Vec::new(),
         };
 
-        let default_texture = ctx.new_texture(TextureAccess::Static, TextureSource::Bytes(&[255, 255, 255, 255]), TextureParams {
-            kind: TextureKind::Texture2D,
-            format: TextureFormat::RGBA8,
-            wrap: TextureWrap::Clamp,
-            min_filter: FilterMode::Linear,
-            mag_filter: FilterMode::Linear,
-            width: 1,
-            height: 1,
-            mipmap_filter: MipmapFilterMode::None,
-            allocate_mipmaps: false,
-        });
+        let default_texture = ctx.new_texture(
+            TextureAccess::Static,
+            TextureSource::Bytes(&[255, 255, 255, 255]),
+            TextureParams {
+                kind: TextureKind::Texture2D,
+                format: TextureFormat::RGBA8,
+                wrap: TextureWrap::Clamp,
+                min_filter: FilterMode::Linear,
+                mag_filter: FilterMode::Linear,
+                width: 1,
+                height: 1,
+                mipmap_filter: MipmapFilterMode::None,
+                allocate_mipmaps: false,
+            },
+        );
 
         YakuiMiniquadState {
             main_pipeline,
@@ -353,8 +370,16 @@ impl YakuiMiniquadState {
             textures,
             layout,
             default_texture,
-            vertices: ctx.new_buffer(BufferType::VertexBuffer, BufferUsage::Stream, BufferSource::empty::<yakui_core::paint::Vertex>(1)),
-            indices: ctx.new_buffer(BufferType::IndexBuffer, BufferUsage::Stream, BufferSource::empty::<u16>(1)),
+            vertices: ctx.new_buffer(
+                BufferType::VertexBuffer,
+                BufferUsage::Stream,
+                BufferSource::empty::<yakui_core::paint::Vertex>(1),
+            ),
+            indices: ctx.new_buffer(
+                BufferType::IndexBuffer,
+                BufferUsage::Stream,
+                BufferSource::empty::<u16>(1),
+            ),
             commands: Vec::new(),
         }
     }
@@ -453,11 +478,7 @@ impl YakuiMiniquadState {
             });
 
             let base = draw_vertices.len() as u16;
-            let indices: Vec<u16> = mesh
-                .indices
-                .iter()
-                .map(|&index| base + index as u16)
-                .collect();
+            let indices: Vec<u16> = mesh.indices.iter().map(|&index| base + index).collect();
 
             let start = draw_indices.len() as u32;
             let end = start + indices.len() as u32;
@@ -482,7 +503,11 @@ impl YakuiMiniquadState {
             draw_vertices.len() * size_of::<yakui_core::paint::Vertex>();
         if ctx.buffer_size(self.vertices) < size_of_vertex_data_in_bytes {
             ctx.delete_buffer(self.vertices);
-            self.vertices = ctx.new_buffer(BufferType::VertexBuffer, BufferUsage::Stream, BufferSource::empty::<yakui_core::paint::Vertex>(size_of_vertex_data_in_bytes));
+            self.vertices = ctx.new_buffer(
+                BufferType::VertexBuffer,
+                BufferUsage::Stream,
+                BufferSource::empty::<yakui_core::paint::Vertex>(size_of_vertex_data_in_bytes),
+            );
             ctx.buffer_update(self.vertices, BufferSource::slice(&draw_vertices));
             self.layout.vertex_buffers = vec![self.vertices];
         } else {
@@ -493,7 +518,11 @@ impl YakuiMiniquadState {
 
         if ctx.buffer_size(self.indices) < size_of_index_data_in_bytes {
             ctx.delete_buffer(self.indices);
-            self.indices = ctx.new_buffer(BufferType::IndexBuffer, BufferUsage::Stream, BufferSource::empty::<u16>(size_of_index_data_in_bytes));
+            self.indices = ctx.new_buffer(
+                BufferType::IndexBuffer,
+                BufferUsage::Stream,
+                BufferSource::empty::<u16>(size_of_index_data_in_bytes),
+            );
             ctx.buffer_update(self.indices, BufferSource::slice(&draw_indices));
             self.layout.index_buffer = self.indices;
         } else {
@@ -505,9 +534,9 @@ impl YakuiMiniquadState {
 
     fn update_textures(&mut self, ctx: &mut Context, paint: &PaintDom) {
         for (id, texture) in paint.textures() {
-            if self.textures.contains_key(&id) == false {
-                self.textures.insert(id, make_texture(ctx, texture));
-            }
+            self.textures
+                .entry(id)
+                .or_insert_with(|| make_texture(ctx, texture));
         }
 
         for (id, change) in paint.texture_edits() {
@@ -759,7 +788,7 @@ fn make_text_pipeline(
             },
             yakui_shader_text::meta(),
         )
-    .expect("[yakui-miniquad]: could not compile text shader!");
+        .expect("[yakui-miniquad]: could not compile text shader!");
 
     let pipeline_params = PipelineParams {
         cull_face: CullFace::Nothing,
