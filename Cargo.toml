@@ -17,3 +17,4 @@ yakui-core = "0.2.0"
 [dev-dependencies]
 yakui = "0.2.0"
 image = "0.25.1"
+macroquad = "0.4.5"
