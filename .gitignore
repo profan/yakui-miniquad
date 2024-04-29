@@ -2,3 +2,4 @@ target/
 *.*.s??
 dist/
 www/
+.idea/
