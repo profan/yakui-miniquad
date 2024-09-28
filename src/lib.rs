@@ -361,6 +361,7 @@ impl YakuiMiniquadState {
                 height: 1,
                 mipmap_filter: MipmapFilterMode::None,
                 allocate_mipmaps: false,
+                sample_count: 0,
             },
         );
 
@@ -723,6 +724,7 @@ fn make_texture(ctx: &mut Context, texture: &yakui_core::paint::Texture) -> Text
             height: dimensions.y,
             mipmap_filter: MipmapFilterMode::None,
             allocate_mipmaps: false,
+            sample_count: 0,
         },
     );
     id
