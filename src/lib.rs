@@ -291,7 +291,7 @@ impl EventHandler for YakuiMiniQuad {
 pub struct YakuiMiniquadState {
     main_pipeline: Pipeline,
     text_pipeline: Pipeline,
-    textures: HashMap<yakui_core::ManagedTextureId, TextureId>,
+    textures: HashMap<yakui_core::TextureId, TextureId>,
     layout: Bindings,
 
     default_texture: TextureId,
@@ -396,7 +396,8 @@ impl YakuiMiniquadState {
 
         self.update_textures(ctx, paint);
 
-        if paint.calls().is_empty() {
+        let layers = paint.layers();
+        if layers.iter().all(|layer| layer.calls.is_empty()) {
             return;
         }
 
@@ -463,9 +464,9 @@ impl YakuiMiniquadState {
         }
     }
 
-    fn update_buffers(&mut self, ctx: &mut Context, paint: &PaintDom) {
-        let commands = paint.calls();
-        self.commands.clear();
+    fn update_buffers_with_layer(&mut self, ctx: &mut Context, layer: &yakui_core::paint::PaintLayer) {
+
+        let commands = &layer.calls;
 
         let mut draw_vertices: Vec<YakuiVertex> = Vec::new();
         let mut draw_indices: Vec<u16> = Vec::new();
@@ -531,12 +532,23 @@ impl YakuiMiniquadState {
         }
 
         self.commands.extend(draw_commands);
+
+    }
+
+    fn update_buffers(&mut self, ctx: &mut Context, paint: &PaintDom) {
+
+        self.commands.clear();
+
+        for layer in paint.layers().iter() {
+            self.update_buffers_with_layer(ctx, layer);
+        }
+
     }
 
     fn update_textures(&mut self, ctx: &mut Context, paint: &PaintDom) {
         for (id, texture) in paint.textures() {
             self.textures
-                .entry(id)
+                .entry(id.into())
                 .or_insert_with(|| make_texture(ctx, texture));
         }
 
@@ -544,15 +556,15 @@ impl YakuiMiniquadState {
             match change {
                 yakui_core::paint::TextureChange::Added => {
                     let texture = paint.texture(id).unwrap();
-                    self.textures.insert(id, make_texture(ctx, texture));
+                    self.textures.insert(id.into(), make_texture(ctx, texture));
                 }
                 yakui_core::paint::TextureChange::Removed => {
-                    if let Some(t) = self.textures.remove(&id) {
+                    if let Some(t) = self.textures.remove(&id.into()) {
                         ctx.delete_texture(t);
                     }
                 }
                 yakui_core::paint::TextureChange::Modified => {
-                    if let Some(existing) = self.textures.get_mut(&id) {
+                    if let Some(existing) = self.textures.get_mut(&id.into()) {
                         let texture = paint.texture(id).unwrap();
                         ctx.texture_update(*existing, texture.data());
                     }
