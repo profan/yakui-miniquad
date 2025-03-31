@@ -705,6 +705,7 @@ fn miniquad_key_to_yakui(key: KeyCode) -> Option<YakuiKeyCode> {
         KeyCode::RightAlt => Some(YakuiKeyCode::AltRight),
         KeyCode::RightSuper => Some(YakuiKeyCode::Super), // #FIXME: is this left super or right super? are they the same?
         KeyCode::Menu => Some(YakuiKeyCode::ContextMenu),
+        KeyCode::Back => Some(YakuiKeyCode::Escape),
         KeyCode::Unknown => None,
     }
 }
